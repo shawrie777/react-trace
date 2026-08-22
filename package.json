@@ -1,0 +1,80 @@
+{
+  "name": "react-trace",
+  "displayName": "React-Trace",
+  "description": "Find everywhere a variable definition could have been set",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.134.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "react-trace.traceVariableOrigin",
+        "title": "Trace Variable Origin"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "react-trace.traceVariableOrigin",
+          "when": "resourceLangId == typescript || resourceLangId == typescriptreact",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": {
+      "command": "react-trace.traceVariableOrigin",
+      "key": "ctrl+shift+t",
+      "when": "editorTextFocus && (editorLangId == typescript || editorLangId == typescriptreact)"
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "variableTracer",
+          "title": "Variable Trace",
+          "icon": "airIcon.svg"
+        }
+      ]
+    },
+    "views": {
+      "variableTracer": [
+        {
+          "type": "webview",
+          "id": "variableTracer.view",
+          "name": "Trace",
+          "icon": "airIcon.svg"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "24.x",
+    "@types/vscode": "^1.134.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.5.0",
+    "ts-morph": "^28.0.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  }
+}
