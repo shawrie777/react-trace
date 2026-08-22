@@ -54,6 +54,16 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
               white-space: pre-wrap;
             }
 
+            .kind {
+              color: var(--vscode-badge-foreground);
+              background: var(--vscode-badge-background);
+              border-radius: 3px;
+              display: inline-block;
+              font-size: 0.85em;
+              margin-bottom: 4px;
+              padding: 1px 5px;
+            }
+
             .meta {
               color: var(--vscode-descriptionForeground);
               font-size: 0.9em;
@@ -71,9 +81,11 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
 
 function renderNode(node: GraphNode): string {
   return `<div class="node">
+    <div class="kind">${escapeHtml(node.kind)}</div>
     <div class="preview">${escapeHtml(node.preview)}</div>
-    <div class="meta">${escapeHtml(node.file)}:${node.line}</div>
+    <div class="meta">${escapeHtml(vscode.workspace.asRelativePath(node.file, false))}:${node.line}</div>
     <div class="meta">${escapeHtml(node.containingFunc || "top level")}</div>
+    ${node.note ? `<div class="meta">${escapeHtml(node.note)}</div>` : ""}
     ${node.children.map(renderNode).join("")}
   </div>`;
 }
