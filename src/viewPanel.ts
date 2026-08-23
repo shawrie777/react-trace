@@ -3,8 +3,8 @@ import { GraphNode } from './traceTypes';
 
 export let traceView: TraceViewProvider | undefined;
 
-export function createTraceViewProvider(extensionUri: vscode.Uri) {
-  traceView = new TraceViewProvider(extensionUri);
+export function createTraceViewProvider() {
+  traceView = new TraceViewProvider();
   return traceView;
 }
 
@@ -12,13 +12,23 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'variableTracer.view';
   view: vscode.WebviewView | undefined;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
-
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
     };
+    webviewView.webview.onDidReceiveMessage(async message => {
+      if (message?.type !== "open" || typeof message.file !== "string") {
+        return;
+      }
+
+      const line = typeof message.line === "number" ? Math.max(message.line - 1, 0) : 0;
+      const document = await vscode.workspace.openTextDocument(vscode.Uri.file(message.file));
+      await vscode.window.showTextDocument(document, {
+        selection: new vscode.Range(line, 0, line, 0),
+        preserveFocus: false,
+      });
+    });
 
     webviewView.webview.html = `<!DOCTYPE html>
       <html>
@@ -49,6 +59,10 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
               padding-left: 12px;
             }
 
+            summary {
+              cursor: pointer;
+            }
+
             .preview {
               font-family: var(--vscode-editor-font-family);
               white-space: pre-wrap;
@@ -64,6 +78,21 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
               padding: 1px 5px;
             }
 
+            .toolbar {
+              display: flex;
+              gap: 12px;
+              margin-bottom: 12px;
+            }
+
+            button {
+              background: none;
+              border: none;
+              color: var(--vscode-textLink-foreground);
+              cursor: pointer;
+              font: inherit;
+              padding: 0;
+            }
+
             .meta {
               color: var(--vscode-descriptionForeground);
               font-size: 0.9em;
@@ -73,21 +102,56 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
         </head>
         <body>
           <h3>Trace Result</h3>
+          <div class="toolbar">
+            <button data-action="expand">Expand all</button>
+            <button data-action="collapse">Collapse all</button>
+          </div>
           ${renderNode(node)}
+          <script>
+            const vscode = acquireVsCodeApi();
+
+            document.addEventListener("click", event => {
+              const actionButton = event.target.closest("button[data-action]");
+              if (actionButton) {
+                const shouldOpen = actionButton.dataset.action === "expand";
+                document.querySelectorAll("details.node").forEach(detail => {
+                  detail.open = shouldOpen;
+                });
+                return;
+              }
+
+              const button = event.target.closest("button[data-file]");
+              if (!button) return;
+
+              vscode.postMessage({
+                type: "open",
+                file: button.dataset.file,
+                line: Number(button.dataset.line),
+              });
+            });
+          </script>
         </body>
       </html>`;
   }
 }
 
 function renderNode(node: GraphNode): string {
-  return `<div class="node">
-    <div class="kind">${escapeHtml(node.kind)}</div>
-    <div class="preview">${escapeHtml(node.preview)}</div>
-    <div class="meta">${escapeHtml(vscode.workspace.asRelativePath(node.file, false))}:${node.line}</div>
+  const displayPath = `${vscode.workspace.asRelativePath(node.file, false)}:${node.line}`;
+
+  return `<details class="node" open>
+    <summary>
+      <span class="kind">${escapeHtml(node.kind)}</span>
+      <span class="preview">${escapeHtml(node.preview)}</span>
+    </summary>
+    <div class="meta">
+      <button data-file="${escapeAttribute(node.file)}" data-line="${node.line}">
+        ${escapeHtml(displayPath)}
+      </button>
+    </div>
     <div class="meta">${escapeHtml(node.containingFunc || "top level")}</div>
     ${node.note ? `<div class="meta">${escapeHtml(node.note)}</div>` : ""}
     ${node.children.map(renderNode).join("")}
-  </div>`;
+  </details>`;
 }
 
 function escapeHtml(value: string): string {
@@ -97,4 +161,8 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value: string): string {
+  return escapeHtml(value).replaceAll("`", "&#096;");
 }

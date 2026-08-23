@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { Node } from "ts-morph";
-import { buildTraceTree } from "./traceEngine";
+import { trace } from "./traceEngine";
+import { TraceTarget } from "./traceEngine/types";
 import { getFreshSourceFile, project } from "./morphUtils";
-import { hasUserDeclaration } from "./nodeUtils";
 import { traceView } from "./viewPanel";
 
 export async function traceVariableOrigin() {
@@ -37,7 +37,7 @@ export async function traceVariableOrigin() {
   }
 
   const traceNode = getTraceNodeFromSelection(selectedNode);
-  const tree = await buildTraceTree(traceNode);
+  const tree = await trace({node: traceNode, bindings: new Map<string, TraceTarget>()});
 
   if (tree) await traceView?.render(tree);
 }
@@ -77,4 +77,15 @@ function canTraceSelection(identifier: Node): boolean {
   }
 
   return false;
+}
+
+function hasUserDeclaration(node: Node): boolean {
+    return node.getSymbol()?.getDeclarations().some(node => {
+        const sourceFile = node.getSourceFile();
+            return (
+                !sourceFile.isFromExternalLibrary() &&
+                !sourceFile.isInNodeModules() &&
+                !sourceFile.isDeclarationFile()
+            );
+        }) ?? false;
 }

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from "fs";
 import * as path from 'path';
-import { Project, Node } from "ts-morph";
+import { Project } from "ts-morph";
 
 export let project: Project | undefined;
 

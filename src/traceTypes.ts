@@ -2,11 +2,16 @@ export type GraphNodeKind =
   | "assignment"
   | "call"
   | "cycle"
+  | "context"
   | "expression"
+  | "external"
+  | "hook"
   | "literal"
+  | "mutation"
   | "parameter"
   | "property"
   | "return"
+  | "state"
   | "selection"
   | "unknown";
 
