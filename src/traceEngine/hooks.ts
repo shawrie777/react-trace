@@ -2,12 +2,13 @@ import { Node, CallExpression, BindingElement } from "ts-morph";
 import { GraphNodeKind } from "../traceTypes";
 import { TraceTarget } from "./types";
 import { findIdentifierDefinitions } from "./identifiers";
-import { getJsxPropTargets } from "./props";
 import { isCallNamed } from "./callExpressions";
-import { getBindingElementIdentifier, getReturnTargets, toTarget } from "./utils";
-import { getArrayBindingElement } from "./array";
+import { getBindingElementIdentifier, toTarget } from "./utils";
+import { getArrayBindingElement } from "./arrays";
 import { getNodeId } from "../nodeUtils";
 import { bindFirstParameterToTarget, getFunctionLikesFromExpression } from "./functions";
+import { getReturnTargets } from "./expressions";
+import { getJsxPropTargets } from "./props/jsx";
 
 export function findUseContextValues(call: CallExpression, bindings: Map<string, TraceTarget>): TraceTarget[] {
   const contextArg = call.getArguments()[0];

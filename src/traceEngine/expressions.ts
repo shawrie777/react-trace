@@ -1,10 +1,10 @@
-import { Node } from "ts-morph";
+import { Node, SyntaxKind } from "ts-morph";
 import { isTerminalValue } from "../nodeUtils";
-import { TraceTarget } from "./types";
+import { TraceTarget, FunctionLike } from "./types";
 import { findIdentifierDefinitions } from "./identifiers";
-import { findPropertyAccessSources } from "./props";
 import { findElementAccessSources } from "./elementAccess";
 import { toTarget } from "./utils";
+import { findPropertyAccessSources } from "./props/access";
 
 export function findReturnedValueSources(node: Node, bindings: Map<string, TraceTarget>): TraceTarget[] {
   if (!Node.isReturnStatement(node)) return [];
@@ -13,6 +13,27 @@ export function findReturnedValueSources(node: Node, bindings: Map<string, Trace
   if (!expression) return [];
 
   return findExpressionSources(expression, bindings);
+}
+
+export function getReturnTargets(functionLike: FunctionLike, bindings: Map<string, TraceTarget>): TraceTarget[] {
+  if (Node.isArrowFunction(functionLike)) {
+    const body = functionLike.getBody();
+
+    if (Node.isBlock(body)) {
+      return body
+        .getDescendantsOfKind(SyntaxKind.ReturnStatement)
+        .map(returnStatement => toTarget(returnStatement, bindings, "return"));
+    }
+
+    return [toTarget(body, bindings, "return", "Implicit arrow-function return")];
+  }
+
+  const body = functionLike.getBody();
+  if (!body) return [];
+
+  return body
+    .getDescendantsOfKind(SyntaxKind.ReturnStatement)
+    .map(returnStatement => toTarget(returnStatement, bindings, "return"));
 }
 
 export function findExpressionSources(node: Node, bindings: Map<string, TraceTarget>): TraceTarget[] {

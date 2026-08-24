@@ -1,9 +1,9 @@
 import { Node } from "ts-morph";
 import { TraceTarget } from "./types";
-import { findArrayElementSourcesForExpression } from "./array";
-import { findPropertySourcesForExpression } from "./props";
-import { findExpressionSources } from "./returns";
+import { findExpressionSources } from "./expressions";
 import { toTarget } from "./utils";
+import { findArrayElementSourcesForExpression } from "./arrays/elements";
+import { findPropertySourcesForExpression } from "./props/sources";
 
 export function findElementAccessSources(
   elementAccess: Node,

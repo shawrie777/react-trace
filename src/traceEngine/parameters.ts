@@ -1,9 +1,9 @@
 import { Node, Identifier, ParameterDeclaration } from "ts-morph";
 import { getNodeId } from "../nodeUtils";
 import { TraceTarget } from "./types";
-import { findCallSiteArguments } from "./callExpressions";
-import { findReactPropsObjectArguments } from "./props";
-import { withInitializerFallback } from "./utils";
+import { toTarget, withInitializerFallback } from "./utils";
+import { getParameterFunction, getFunctionNameNode } from "./functions";
+import { findReactPropsObjectArguments } from "./props/jsx";
 
 export function getParameterDeclarationForIdentifier(node: Identifier): ParameterDeclaration | undefined {
   const declarations = node.getSymbol()?.getDeclarations() ?? [];
@@ -32,4 +32,32 @@ export function findParameterArguments(
     "parameter",
     "Parameter default value"
   );
+}
+
+export function findCallSiteArguments(
+  parameter: ParameterDeclaration,
+  bindings: Map<string, TraceTarget>
+): TraceTarget[] {
+  const functionLike = getParameterFunction(parameter);
+  const nameNode = getFunctionNameNode(functionLike);
+  if (!functionLike || !nameNode) return [];
+
+  const parameterIndex = functionLike.getParameters().findIndex(candidate => candidate === parameter);
+  if (parameterIndex === -1) return [];
+
+  return nameNode
+    .findReferencesAsNodes()
+    .flatMap(ref => {
+      const parent = ref.getParent();
+
+      if (
+        Node.isCallExpression(parent) &&
+        parent.getExpression() === ref
+      ) {
+        const arg = parent.getArguments()[parameterIndex];
+        return arg ? [toTarget(arg, bindings, "parameter")] : [];
+      }
+
+      return [];
+    });
 }

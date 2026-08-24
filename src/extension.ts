@@ -9,7 +9,7 @@ import { TraceViewProvider, createTraceViewProvider } from './viewPanel';
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "react-trace" is now active!');
-	const provider = createTraceViewProvider(context.extensionUri);
+	const provider = createTraceViewProvider();
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(TraceViewProvider.viewType, provider)
 	);

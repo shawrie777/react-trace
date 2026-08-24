@@ -1,10 +1,11 @@
-import { Node, CallExpression, ParameterDeclaration, Identifier } from "ts-morph";
+import { Node, CallExpression, Identifier } from "ts-morph";
 import { getNodeId } from "../nodeUtils";
 import { TraceTarget, FunctionLike } from "./types";
-import { findArrayElementCandidateSources, findArrayMethodReturnValues } from "./array";
 import { findUseContextValues } from "./hooks";
-import { getCallableDeclarations, getParameterFunction, getFunctionNameNode, getFunctionLikesFromExpression, createReduceCallbackContext } from "./functions";
-import { toTarget, getReturnTargets, isIdentifierWrite } from "./utils";
+import { getCallableDeclarations } from "./functions";
+import { toTarget, isIdentifierWrite } from "./utils";
+import { getReturnTargets } from "./expressions";
+import { findArrayMethodReturnValues } from "./arrays/methods";
 
 export function findCallReturnValues(call: CallExpression, bindings: Map<string, TraceTarget>): TraceTarget[] {
   if (isCallNamed(call, ["useContext"])) {
@@ -66,35 +67,6 @@ function createCallContextForFunction(
   return bindings;
 }
 
-export function findCallSiteArguments(
-  parameter: ParameterDeclaration,
-  bindings: Map<string, TraceTarget>
-): TraceTarget[] {
-  const functionLike = getParameterFunction(parameter);
-  const nameNode = getFunctionNameNode(functionLike);
-  if (!functionLike || !nameNode) return [];
-
-  const parameterIndex = functionLike.getParameters().findIndex(candidate => candidate === parameter);
-  if (parameterIndex === -1) return [];
-
-  return nameNode
-    .findReferencesAsNodes()
-    .flatMap(ref => {
-      const parent = ref.getParent();
-
-      if (
-        Node.isCallExpression(parent) &&
-        parent.getExpression() === ref
-      ) {
-        const arg = parent.getArguments()[parameterIndex];
-        return arg ? [toTarget(arg, bindings, "parameter")] : [];
-      }
-
-      return [];
-    });
-}
-
-
 export function findMutationCallTargets(
   call: CallExpression,
   target: Identifier,
@@ -125,41 +97,5 @@ export function findMutationCallTargets(
   return [
     toTarget(expression.getExpression(), bindings, "mutation", "Previous value before mutation"),
     ...call.getArguments().map(arg => toTarget(arg, bindings, "mutation", "Mutation input")),
-  ];
-}
-
-export function findReduceReturnValues(
-  call: CallExpression,
-  receiver: Node,
-  bindings: Map<string, TraceTarget>
-): TraceTarget[] {
-  const callback = call.getArguments()[0];
-  if (!callback) return [];
-
-  const functionLikes = getFunctionLikesFromExpression(callback);
-  if (functionLikes.length === 0) return [];
-
-  const initialValue = call.getArguments()[1];
-  const elementTargets = findArrayElementCandidateSources(receiver, bindings);
-  const accumulatorTarget = initialValue
-    ? toTarget(initialValue, bindings, "parameter", "Initial reduce accumulator")
-    : elementTargets[0];
-
-  return [
-    ...(initialValue ? [toTarget(initialValue, bindings, "parameter", "Initial reduce accumulator")] : []),
-    ...elementTargets.flatMap(elementTarget => functionLikes.flatMap(functionLike => {
-      const callbackContext = createReduceCallbackContext(
-        functionLike,
-        accumulatorTarget,
-        elementTarget,
-        receiver,
-        bindings
-      );
-
-      return getReturnTargets(functionLike, callbackContext).map(target => ({
-        ...target,
-        note: target.note ?? "Array reduce callback return",
-      }));
-    })),
   ];
 }
