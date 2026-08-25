@@ -49,9 +49,9 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
     const TEXT_PADDING = 10;
     const PREVIEW_LENGTH = 30;
     const FUNCTION_LENGTH = 30;
-    const tree = positionTree(node, NODE_WIDTH + 70, NODE_HEIGHT + 42);
-    const maxX = Math.max(...tree.map(node => node.x)) + NODE_WIDTH + 2 * PADDING;
-    const maxY = Math.max(...tree.map(node => node.y)) + NODE_HEIGHT + 2 * PADDING;
+    const graph = positionTree(node, NODE_WIDTH + 70, NODE_HEIGHT + 42);
+    const maxX = Math.max(...graph.nodes.map(node => node.x)) + NODE_WIDTH + 2 * PADDING;
+    const maxY = Math.max(...graph.nodes.map(node => node.y)) + NODE_HEIGHT + 2 * PADDING;
 
     this.view.show(true);
     this.view.webview.html = `<!DOCTYPE html>
@@ -126,24 +126,26 @@ export class TraceViewProvider implements vscode.WebviewViewProvider {
         <body>
           <div class="trace-scroll">
             <svg width="${maxX}" height="${maxY}" viewBox="0 0 ${maxX} ${maxY}">
-              ${tree.filter(elem => elem.parent).map(elem => {
-                  const minX = elem.parent!.x + NODE_WIDTH + PADDING;
-                  const maxX = elem.x + PADDING;
-                  const minY = elem.parent!.y + PADDING + NODE_HEIGHT / 2;
-                  const maxY = elem.y + PADDING + NODE_HEIGHT / 2;
-                  return `<path fill="none" stroke="var(--vscode-panel-border)" d="M ${minX} ${minY} C ${maxX} ${minY} ${minX} ${maxY} ${maxX} ${maxY}" />`;
+              ${graph.edges.map(edge => {
+                  const minX = edge.parent.x + NODE_WIDTH + PADDING;
+                  const maxX = edge.child.x + PADDING;
+                  const minY = edge.parent.y + PADDING + NODE_HEIGHT / 2;
+                  const maxY = edge.child.y + PADDING + NODE_HEIGHT / 2;
+                  const colour = getEdgeColour(`${edge.parent.key}->${edge.child.key}`);
+                  return `<path fill="none" stroke="${colour}" stroke-width="1.5" stroke-linecap="round" opacity="0.8" d="M ${minX} ${minY} C ${maxX} ${minY} ${minX} ${maxY} ${maxX} ${maxY}" />`;
               }).join("")}
-              ${tree.map(positionedNode => {
+              ${graph.nodes.map(positionedNode => {
                 const x = positionedNode.x + PADDING;
                 const y = positionedNode.y + PADDING;
                 const displayPath = `${vscode.workspace.asRelativePath(positionedNode.node.file, false)}:${positionedNode.node.line}`;
+                const note = getPopupNote(positionedNode.node, positionedNode.incomingCount);
 
                 return `<g class="trace-node"
                   data-file="${escapeAttribute(positionedNode.node.file)}"
                   data-line="${positionedNode.node.line}"
                   data-location="${escapeAttribute(displayPath)}"
                   data-kind="${escapeAttribute(positionedNode.node.kind)}"
-                  data-note="${escapeAttribute(positionedNode.node.note ?? "No note")}">
+                  data-note="${escapeAttribute(note)}">
                   <rect x="${x}" y="${y}" width="${NODE_WIDTH}" height="${NODE_HEIGHT}" rx="8"
                     fill="${getNodeColour(positionedNode.node.kind)}"/>
                   <text x="${x + TEXT_PADDING}" y="${y + 18}" font-size="13" fill="white">${escapeHtml(truncate(positionedNode.node.preview, PREVIEW_LENGTH))}</text>
@@ -244,6 +246,35 @@ function getNodeColour(kind: GraphNodeKind): string {
         case "unknown":
             return "#6B7280"; // grey
     }
+}
+
+function getPopupNote(node: GraphNode, incomingCount: number): string {
+  const note = node.note ?? "No note";
+  if (incomingCount < 2) return note;
+
+  return `${note}; reached by ${incomingCount} branches`;
+}
+
+function getEdgeColour(key: string): string {
+  const colours = [
+    "#60A5FA",
+    "#34D399",
+    "#FBBF24",
+    "#F472B6",
+    "#A78BFA",
+    "#2DD4BF",
+    "#FB7185",
+    "#C084FC",
+    "#38BDF8",
+    "#A3E635",
+  ];
+  let hash = 0;
+
+  for (const char of key) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  }
+
+  return colours[Math.abs(hash) % colours.length];
 }
 
 function escapeHtml(value: string): string {
