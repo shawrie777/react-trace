@@ -1,5 +1,5 @@
 import { Identifier, Node } from "ts-morph";
-import { dedupeNodes } from "./utils";
+import { dedupe } from "./utils";
 
 export function getValueDeclarations(node: Identifier): Node[] {
   const symbol = node.getSymbol();
@@ -9,5 +9,5 @@ export function getValueDeclarations(node: Identifier): Node[] {
     ...(aliasedSymbol?.getDeclarations() ?? []),
   ];
 
-  return dedupeNodes(declarations);
+  return dedupe(declarations);
 }

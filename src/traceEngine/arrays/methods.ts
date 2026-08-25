@@ -71,7 +71,7 @@ export function findArrayMethodReturnValues(
   return [];
 }
 
-export function findReduceReturnValues(
+function findReduceReturnValues(
   call: CallExpression,
   receiver: Node,
   bindings: Map<string, TraceTarget>
@@ -131,7 +131,7 @@ function createArrayCallbackContext(
   return bindings;
 }
 
-export function createReduceCallbackContext(
+function createReduceCallbackContext(
   functionLike: FunctionLike,
   accumulatorTarget: TraceTarget | undefined,
   elementTarget: TraceTarget,

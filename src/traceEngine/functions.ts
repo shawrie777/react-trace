@@ -2,7 +2,7 @@ import { Node, Identifier, CallExpression, ParameterDeclaration } from "ts-morph
 import { getNodeId } from "../nodeUtils";
 import { TraceTarget, FunctionLike } from "./types";
 import { isCallNamed } from "./callExpressions";
-import { dedupeNodes } from "./utils";
+import { dedupe } from "./utils";
 
 export function getFunctionLikesFromExpression(expression: Node): FunctionLike[] {
   if (
@@ -25,7 +25,7 @@ export function getFunctionLikesFromExpression(expression: Node): FunctionLike[]
     ...(aliasedSymbol?.getDeclarations() ?? []),
   ];
 
-  return dedupeNodes(declarations.flatMap(getFunctionLikesFromDeclaration));
+  return dedupe(declarations.flatMap(getFunctionLikesFromDeclaration));
 }
 
 function getWrappedFunctionLikes(call: CallExpression): FunctionLike[] {
@@ -71,10 +71,6 @@ function getFunctionLikesFromDeclaration(declaration: Node): FunctionLike[] {
   }
 
   return [];
-}
-
-export function getCallableDeclarations(call: CallExpression): FunctionLike[] {
-  return getFunctionLikesFromExpression(call.getExpression());
 }
 
 export function getParameterFunction(parameter: ParameterDeclaration): FunctionLike | undefined {

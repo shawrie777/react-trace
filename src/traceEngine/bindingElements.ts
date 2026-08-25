@@ -2,7 +2,7 @@ import { BindingElement, Identifier, Node } from "ts-morph";
 import { getNodeId, nodesReferToSameSymbol } from "../nodeUtils";
 import { findArrayBindingElementSources } from "./arrays";
 import { TraceTarget } from "./types";
-import { bindingElementHasRestToken, bindingElementMatchesIdentifier, toTarget, withInitializerFallback } from "./utils";
+import { bindingElementMatchesIdentifier, toTarget, withInitializerFallback } from "./utils";
 import { findReactPropArguments, findReactRestPropArguments } from "./props/jsx";
 import { getObjectRestOmittedNames, extractObjectRestFromTarget, extractObjectRestFromExpression } from "./props/rest";
 import { extractPropertyFromTarget, findPropertySourcesForExpression, getStaticPropertyName } from "./props/sources";
@@ -19,7 +19,7 @@ export function findBindingElementSources(
     return findArrayBindingElementSources(bindingElement, bindings);
   }
 
-  if (bindingElementHasRestToken(bindingElement)) {
+  if (bindingElement.getDotDotDotToken()) {
     return findObjectRestBindingElementSources(bindingElement, bindings);
   }
 

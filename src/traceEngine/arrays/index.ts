@@ -1,6 +1,6 @@
 import { Node, CallExpression, BindingElement } from "ts-morph";
 import { TraceTarget } from "../types";
-import { bindingElementHasRestToken, toTarget, withInitializerFallback } from "../utils";
+import { toTarget, withInitializerFallback } from "../utils";
 import { getNodeId } from "../../nodeUtils";
 import { getCallName } from "../callExpressions";
 import { findUseReducerSources, findUseStateSources } from "../hooks";
@@ -20,7 +20,7 @@ export function findArrayBindingElementSources(
   if (index === -1) return [];
   const initializer = bindingElement.getInitializer();
 
-  if (bindingElementHasRestToken(bindingElement)) {
+  if (bindingElement.getDotDotDotToken()) {
     return findArrayRestBindingElementSources(bindingElement, index, bindings);
   }
 

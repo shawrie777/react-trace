@@ -13,7 +13,7 @@ export function findElementAccessSources(
 
   const argument = elementAccess.getArgumentExpression();
   const propertyName = argument ? getStaticElementAccessName(argument) : undefined;
-  const elementIndex = argument ? getStaticElementAccessIndex(argument) : undefined;
+  const elementIndex = (propertyName !== undefined && /^\d+$/.test(propertyName)) ? Number(propertyName) : undefined;
 
   if (elementIndex !== undefined) {
     const arrayTargets = findArrayElementSourcesForExpression(
@@ -47,11 +47,4 @@ export function getStaticElementAccessName(argument: Node): string | undefined {
   }
 
   return undefined;
-}
-
-function getStaticElementAccessIndex(argument: Node): number | undefined {
-  const name = getStaticElementAccessName(argument);
-  if (name === undefined || !/^\d+$/.test(name)) return undefined;
-
-  return Number(name);
 }

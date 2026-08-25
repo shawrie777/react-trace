@@ -5,7 +5,7 @@ import { findExpressionSources } from "../expressions";
 import { findIdentifierDefinitions } from "../identifiers";
 import { getParameterDeclarationForIdentifier } from "../parameters";
 import { TraceTarget } from "../types";
-import { toTarget, dedupeTargets } from "../utils";
+import { toTarget, dedupe } from "../utils";
 import { getStaticElementAccessName } from "../elementAccess";
 import { findReactPropArguments } from "./jsx";
 
@@ -119,7 +119,7 @@ function extractPropertyFromObjectLiteral(
     }
   }
 
-  return dedupeTargets(targets);
+  return dedupe(targets);
 }
 
 export function getStaticPropertyName(nameNode: Node): string | undefined {

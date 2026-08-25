@@ -2,7 +2,7 @@ import { Node, CallExpression, Identifier } from "ts-morph";
 import { getNodeId } from "../nodeUtils";
 import { TraceTarget, FunctionLike } from "./types";
 import { findUseContextValues } from "./hooks";
-import { getCallableDeclarations } from "./functions";
+import { getFunctionLikesFromExpression } from "./functions";
 import { toTarget, isIdentifierWrite } from "./utils";
 import { getReturnTargets } from "./expressions";
 import { findArrayMethodReturnValues } from "./arrays/methods";
@@ -15,7 +15,7 @@ export function findCallReturnValues(call: CallExpression, bindings: Map<string,
   const arrayMethodValues = findArrayMethodReturnValues(call, bindings);
   if (arrayMethodValues.length > 0) return arrayMethodValues;
 
-  const functionLikes = getCallableDeclarations(call);
+  const functionLikes = getFunctionLikesFromExpression(call.getExpression());
 
   if (functionLikes.length === 0) {
     return [];

@@ -8,14 +8,22 @@ import {
 
 import { TraceTarget } from "./types";
 import { findDefinitions } from "./definitions";
-import { dedupeTargets } from "./utils";
+import { dedupe } from "./utils";
 import { isCallNamed } from "./callExpressions";
-import { getCallableDeclarations } from "./functions";
+import { getFunctionLikesFromExpression } from "./functions";
+
+const MAX_NODES = 30;
+let nodeCount = 0;
+const MAX_DEPTH = 12;
 
 export async function trace(
   target: TraceTarget,
   path = new Set<string>()
 ): Promise<GraphNode | undefined> {
+  if (path.size > MAX_DEPTH || nodeCount > MAX_NODES) return;
+  if (path.size === 0) nodeCount = 0;
+  nodeCount++;
+
   const { node } = target;
   const id = getNodeId(node);
   const isCycle = path.has(id);
@@ -29,9 +37,13 @@ export async function trace(
   const children = isCycle
     ? []
     : (await Promise.all(
-        dedupeTargets(findDefinitions(target)).map(child => trace(child, nextPath))
+        dedupe(findDefinitions(target)).map(child => trace(child, nextPath))
       )).filter((child): child is GraphNode => !!child);
-  const note = isCycle ? "Cycle detected" : target.note ?? getDefaultNodeNote(node);
+  let note: string | undefined;
+  if (isCycle) note = "Cycle detected";
+  else if (path.size === MAX_DEPTH) note = "Max depth reached";
+  else if (nodeCount === MAX_NODES) note = "Max node count reached";
+  else note = target.note ?? getDefaultNodeNote(node);
 
   return {
     id,
@@ -100,7 +112,7 @@ function getDefaultNodeNote(node: Node): string | undefined {
     return "React hook";
   }
 
-  if (getCallableDeclarations(node).length === 0) {
+  if (getFunctionLikesFromExpression(node.getExpression()).length === 0) {
     return "External or dynamic call boundary";
   }
 

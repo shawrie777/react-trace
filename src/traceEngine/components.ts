@@ -1,7 +1,7 @@
 import { Identifier, Node, SourceFile } from "ts-morph";
 import { getFunctionNameNode } from "./functions";
 import { FunctionLike } from "./types";
-import { dedupeNodes } from "./utils";
+import { dedupe } from "./utils";
 import { isCallNamed } from "./callExpressions";
 import { getValueDeclarations } from "./symbols";
 
@@ -9,7 +9,7 @@ export function getComponentReferenceNameNodes(functionLike: FunctionLike | unde
   if (!functionLike) return [];
 
   const directName = getFunctionNameNode(functionLike);
-  return dedupeNodes([
+  return dedupe([
     ...(directName ? [directName] : []),
     ...findDefaultImportNameNodesForFunction(functionLike),
   ]);

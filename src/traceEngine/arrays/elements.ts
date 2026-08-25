@@ -1,9 +1,10 @@
 import { CallExpression, Node } from "ts-morph";
+import { isTerminalValue } from "../../nodeUtils";
 import { findCallReturnValues } from "../callExpressions";
 import { findExpressionSources } from "../expressions";
 import { findIdentifierDefinitions } from "../identifiers";
 import { TraceTarget } from "../types";
-import { dedupeTargets, toTarget } from "../utils";
+import { dedupe, toTarget } from "../utils";
 import { findArrayMethodReturnValues } from "./methods";
 
 export function findArrayElementSourcesForExpression(
@@ -100,7 +101,7 @@ function findArrayLiteralElementSources(
     position += 1;
   }
 
-  return dedupeTargets(targets);
+  return dedupe(targets);
 }
 
 function findArrayCallElementSources(
@@ -121,7 +122,16 @@ export function findArrayElementCandidateSources(
   bindings: Map<string, TraceTarget>
 ): TraceTarget[] {
   if (Node.isArrayLiteralExpression(expression)) {
-    return expression.getElements().flatMap(element => {
+    const elements = expression.getElements();
+    const isLiteralOnlyArray = elements.every(element =>
+      !Node.isSpreadElement(element) && isTerminalValue(element)
+    );
+
+    if (isLiteralOnlyArray) {
+      return [toTarget(expression, bindings, "literal", "Literal array values")];
+    }
+
+    return elements.flatMap(element => {
       if (Node.isSpreadElement(element)) {
         return [toTarget(element.getExpression(), bindings, "property", "Array spread elements")];
       }

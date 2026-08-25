@@ -14,36 +14,20 @@ export function toTarget(
   kind?: GraphNodeKind,
   note?: string
 ): TraceTarget {
-  return { node, bindings: bindings, kind, note };
+  return { node, bindings, kind, note };
 }
 
-export function dedupeTargets(targets: TraceTarget[]): TraceTarget[] {
+export function dedupe<T extends TraceTarget | Node>(group: T[]) : T[] {
   const seen = new Set<string>();
-  const result: TraceTarget[] = [];
+  const result: T[] = [];
 
-  for (const target of targets) {
-    const key = `${getNodeId(target.node)}:${target.kind ?? ""}:${target.note ?? ""}`;
+  for (const elem of group) {
+    const key = "node" in elem ? `${getNodeId(elem.node)}:${elem.kind ?? ""}:${elem.note ?? ""}` : getNodeId(elem);
     if (seen.has(key)) continue;
 
     seen.add(key);
-    result.push(target);
+    result.push(elem);
   }
-
-  return result;
-}
-
-export function dedupeNodes<TNode extends Node>(nodes: TNode[]): TNode[] {
-  const seen = new Set<string>();
-  const result: TNode[] = [];
-
-  for (const node of nodes) {
-    const key = getNodeId(node);
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    result.push(node);
-  }
-
   return result;
 }
 
@@ -58,13 +42,8 @@ export function withInitializerFallback(
   return [toTarget(initializer, bindings, kind, note)];
 }
 
-export function bindingElementHasRestToken(bindingElement: BindingElement): boolean {
-  return Node.isDotDotDotTokenable(bindingElement) && !!bindingElement.getDotDotDotToken();
-}
-
 export function bindingElementMatchesIdentifier(element: BindingElement, target: Identifier): boolean {
   const nameNode = element.getNameNode();
-
   return Node.isIdentifier(nameNode) && nodesReferToSameSymbol(nameNode, target);
 }
 

@@ -1,7 +1,7 @@
 import { Identifier, Node, Statement } from "ts-morph";
 import { ScanResult, TraceTarget } from "./types";
 import { getContainingOuterStatement, getSiblingStatements } from "./relatedNodes";
-import { dedupeTargets, emptyScanResult, isIdentifierWrite, toTarget } from "./utils";
+import { dedupe, emptyScanResult, isIdentifierWrite, toTarget } from "./utils";
 import { getVariableDeclarationTargets } from "./bindingElements";
 import { statementAlwaysTerminates } from "./controlFlow";
 import { findExpressionSources } from "./expressions";
@@ -32,7 +32,7 @@ export function scanOutwardForReachingDefinitions(
 
     if (result.definitelyAssigned) {
       return {
-        targets: dedupeTargets(targets),
+        targets: dedupe(targets),
         definitelyAssigned: true,
       };
     }
@@ -41,7 +41,7 @@ export function scanOutwardForReachingDefinitions(
   }
 
   return {
-    targets: dedupeTargets(targets),
+    targets: dedupe(targets),
     definitelyAssigned: false,
   };
 }
@@ -60,14 +60,14 @@ function scanStatementsBackward(
 
     if (result.definitelyAssigned) {
       return {
-        targets: dedupeTargets(targets),
+        targets: dedupe(targets),
         definitelyAssigned: true,
       };
     }
   }
 
   return {
-    targets: dedupeTargets(targets),
+    targets: dedupe(targets),
     definitelyAssigned: false,
   };
 }
@@ -115,7 +115,7 @@ function scanStatementForDefinition(
     ];
 
     return {
-      targets: dedupeTargets(targets),
+      targets: dedupe(targets),
       definitelyAssigned:
         (thenTerminates || thenResult.definitelyAssigned) &&
         !!elseStatement &&
@@ -219,7 +219,7 @@ function scanSwitchForDefinition(
   const hasDefault = clauses.some(Node.isDefaultClause);
 
   return {
-    targets: dedupeTargets(clauseResults.flatMap(result => result.targets)),
+    targets: dedupe(clauseResults.flatMap(result => result.targets)),
     definitelyAssigned: hasDefault && clauseResults.every(result => result.definitelyAssigned),
   };
 }
@@ -245,7 +245,7 @@ function scanTryForDefinition(
     : emptyScanResult;
 
   return {
-    targets: dedupeTargets([
+    targets: dedupe([
       ...finallyResult.targets,
       ...tryResult.targets,
       ...catchResult.targets,

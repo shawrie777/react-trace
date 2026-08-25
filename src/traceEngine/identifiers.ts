@@ -22,15 +22,11 @@ export function findIdentifierDefinitions(node: Identifier, bindings: Map<string
     return [toTarget(bindingElement, bindings, "parameter")];
   }
 
-  const reaching = findLocalReachingDefinitions(node, bindings);
-  if (reaching.length > 0) return reaching;
+  const statement = getContainingStatement(node);
+  if (!statement) return findDeclarationInitializers(node, bindings);
 
-  return findDeclarationInitializers(node, bindings);
-}
-
-function findLocalReachingDefinitions(identifier: Identifier, bindings: Map<string, TraceTarget>): TraceTarget[] {
-  const statement = getContainingStatement(identifier);
-  if (!statement) return [];
-
-  return scanOutwardForReachingDefinitions(statement, identifier, bindings).targets;
+  const reachingDefinitions = scanOutwardForReachingDefinitions(statement, node, bindings).targets;
+  return reachingDefinitions.length > 0
+    ? reachingDefinitions
+    : findDeclarationInitializers(node, bindings);
 }

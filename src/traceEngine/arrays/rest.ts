@@ -4,7 +4,7 @@ import { findCallSiteArguments } from "../parameters";
 import { TraceTarget } from "../types";
 import { findCallReturnValues } from "../callExpressions";
 import { findIdentifierDefinitions } from "../identifiers";
-import { dedupeTargets, toTarget } from "../utils";
+import { dedupe, toTarget } from "../utils";
 import { findArrayMethodReturnValues } from "./methods";
 
 export function findArrayRestBindingElementSources(
@@ -115,5 +115,5 @@ function extractArrayRestFromArrayLiteral(
     position += 1;
   }
 
-  return dedupeTargets(targets);
+  return dedupe(targets);
 }

@@ -55,6 +55,13 @@ export function isTerminalValue(node: Node): boolean {
   );
 }
 
+export function nodesReferToSameSymbol(left: Node, right: Node): boolean {
+  const leftKey = getSymbolKey(left);
+  const rightKey = getSymbolKey(right);
+
+  return !!leftKey && leftKey === rightKey;
+}
+
 function getSymbolKey(node: Node): string | undefined {
   const symbol = node.getSymbol();
   if (!symbol) return undefined;
@@ -63,11 +70,4 @@ function getSymbolKey(node: Node): string | undefined {
   if (declarations.length === 0) return undefined;
 
   return declarations.map(getNodeId).sort().join("|");
-}
-
-export function nodesReferToSameSymbol(left: Node, right: Node): boolean {
-  const leftKey = getSymbolKey(left);
-  const rightKey = getSymbolKey(right);
-
-  return !!leftKey && leftKey === rightKey;
 }

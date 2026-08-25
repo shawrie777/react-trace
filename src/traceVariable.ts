@@ -17,14 +17,15 @@ export async function traceVariableOrigin() {
     return;
   }
 
-  const position = editor.selection.active;
-  const offset = editor.document.offsetAt(position);
   const sourceFile = getFreshSourceFile(editor.document);
 
   if (!sourceFile) {
     vscode.window.showErrorMessage("traceVariable: no source file found.");
     return;
   }
+
+  const position = editor.selection.active;
+  const offset = editor.document.offsetAt(position);
 
   const selectedNode = sourceFile.getDescendantAtPos(offset);
   if (!selectedNode || !Node.isIdentifier(selectedNode)) {
@@ -38,7 +39,6 @@ export async function traceVariableOrigin() {
 
   const traceNode = getTraceNodeFromSelection(selectedNode);
   const tree = await trace({node: traceNode, bindings: new Map<string, TraceTarget>()});
-
   if (tree) await traceView?.render(tree);
 }
 
