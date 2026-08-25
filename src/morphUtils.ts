@@ -10,7 +10,6 @@ export function getProject() {
   if (!workspace) return;
 
   const tsconfig = findTsConfig(workspace.uri.fsPath);
-  console.log(tsconfig);
 
   project = new Project({tsConfigFilePath: tsconfig});
 }
