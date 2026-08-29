@@ -62,6 +62,9 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "ts-morph": "^28.0.0"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
@@ -69,7 +72,6 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "eslint": "^10.5.0",
-    "ts-morph": "^28.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.1"
   },
